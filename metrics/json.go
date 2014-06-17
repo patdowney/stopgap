@@ -10,14 +10,16 @@ import (
 )
 
 func decodePair(key Key, value interface{}) map[string]string {
-	pair := make(map[string]string)
+	var pair map[string]string
 
 	switch value.(type) {
 	case bool, string, []interface{}:
 		break
 	case json.Number:
+		pair = make(map[string]string)
 		pair[key.String()] = value.(json.Number).String()
 	case float64:
+		pair = make(map[string]string)
 		pair[key.String()] = fmt.Sprintf("%f", value)
 	default:
 		pair = decodeDict(key, value.(map[string]interface{}))
