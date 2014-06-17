@@ -161,6 +161,9 @@ func (t *TimeArg) Set(value string) error {
 	t.Time, err = time.Parse(time.RFC3339, value)
 	return err
 }
+func (t *TimeArg) String() string {
+	return t.Time.Format(time.RFC3339)
+}
 
 func config() *Config {
 	c := &Config{}
@@ -169,7 +172,8 @@ func config() *Config {
 	flag.StringVar(&c.Prefix, "prefix", "", "metric prefix")
 
 	var t TimeArg
-	flag.Var(&t, "default-time", "default metric time")
+	t.Time = time.Now()
+	flag.Var(&t, "metric-timestamp", "metric time stamp (defaults to now)")
 
 	graphiteConfig(&c.Graphite)
 
