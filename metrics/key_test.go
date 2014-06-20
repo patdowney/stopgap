@@ -9,7 +9,7 @@ func TestAddFirstKey(t *testing.T) {
 	k := empty.Add("first")
 
 	if k.String() != expected {
-		t.Error("%v != %v", expected, k)
+		t.Errorf("'%v' != '%v'", expected, k)
 		t.FailNow()
 	}
 }
@@ -21,7 +21,7 @@ func TestAddMultipleKeys(t *testing.T) {
 	k := empty.Add("first").Add("second").Add("third")
 
 	if k.String() != expected {
-		t.Error("%v != %v", expected, k)
+		t.Errorf("'%v' != '%v'", expected, k)
 		t.FailNow()
 	}
 }
