@@ -1,13 +1,20 @@
 package metrics
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Key struct {
 	Key string
 }
 
+func cleanse(key string) string {
+	return strings.Replace(key, ".", "_", -1)
+}
+
 func (k Key) Add(newKeyPart string) Key {
-	newKey := newKeyPart
+	newKey := cleanse(newKeyPart)
 	if k.Key != "" {
 		newKey = fmt.Sprintf("%v.%v", k.Key, newKeyPart)
 	}

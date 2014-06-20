@@ -25,3 +25,16 @@ func TestAddMultipleKeys(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+func TestAddKeyWithDots(t *testing.T) {
+	empty := Key{}
+	expected := "first_nodots"
+
+	k := empty.Add("first.nodots")
+
+	if k.String() != expected {
+		t.Errorf("'%v' != '%v'", expected, k)
+		t.FailNow()
+	}
+
+}
