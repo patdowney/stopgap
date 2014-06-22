@@ -99,7 +99,7 @@ func TestMapKeys(t *testing.T) {
 	}
 }
 
-func TestDecodeArrayKey(t *testing.T) {
+func TestDecodeListKey(t *testing.T) {
 	k := Key{}
 	expectedKey := "0.number"
 
@@ -107,7 +107,29 @@ func TestDecodeArrayKey(t *testing.T) {
 		map[string]interface{}{
 			"number": 2.0}}
 
-	b := decodeArray(k, input)
+	b := decodeList(k, input, "")
+	if b == nil {
+		t.Errorf("failed to decode array: %v", b)
+		t.Fail()
+	}
+
+	keys := mapKeys(b)
+	if keys[0] != expectedKey {
+		t.Errorf("failed to decode array key properly: %v != %v", keys[0], expectedKey)
+		t.FailNow()
+	}
+}
+
+func TestDecodeListCustomKey(t *testing.T) {
+	k := Key{}
+	expectedKey := "test.number"
+
+	input := []map[string]interface{}{
+		map[string]interface{}{
+			"name":   "test",
+			"number": 2.0}}
+
+	b := decodeList(k, input, "name")
 	if b == nil {
 		t.Errorf("failed to decode array: %v", b)
 		t.Fail()

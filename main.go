@@ -15,10 +15,11 @@ import (
 )
 
 type Config struct {
-	DryRun     bool
-	Prefix     string
-	MetricTime time.Time
-	Graphite   metrics.GraphiteConfig
+	DryRun      bool
+	Prefix      string
+	ListItemKey string
+	MetricTime  time.Time
+	Graphite    metrics.GraphiteConfig
 }
 
 func graphiteConfig(cfg *metrics.GraphiteConfig) {
@@ -44,6 +45,7 @@ func config() *Config {
 
 	flag.BoolVar(&c.DryRun, "dry-run", false, "dry run")
 	flag.StringVar(&c.Prefix, "prefix", "", "metric prefix")
+	flag.StringVar(&c.ListItemKey, "list-item-key", "", "use item key instead of item index")
 
 	var t timeArg
 	t.Time = time.Now()
@@ -126,6 +128,7 @@ func main() {
 	for _, reader := range readers {
 		metricDecoder := metrics.NewDecoder(reader)
 		metricDecoder.MetricTime = cfg.MetricTime
+		metricDecoder.ListItemKey = cfg.ListItemKey
 		metricDecoder.KeyPrefix = (metrics.Key{}).Add(cfg.Prefix)
 		err = metricDecoder.Decode(&m)
 		if err != nil {
