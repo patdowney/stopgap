@@ -10,13 +10,13 @@ type Key struct {
 }
 
 func cleanse(key string) string {
-	return strings.Replace(key, ".", "_", -1)
+	return strings.ToLower(strings.Replace(key, ".", "_", -1))
 }
 
 func (k Key) Add(newKeyPart string) Key {
 	newKey := cleanse(newKeyPart)
 	if k.Key != "" {
-		newKey = fmt.Sprintf("%v.%v", k.Key, newKeyPart)
+		newKey = fmt.Sprintf("%v.%v", k.Key, newKey)
 	}
 
 	return Key{Key: newKey}

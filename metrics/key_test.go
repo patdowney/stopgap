@@ -38,3 +38,16 @@ func TestAddKeyWithDots(t *testing.T) {
 	}
 
 }
+
+func TestAddKeyWithUpperCase(t *testing.T) {
+	empty := Key{}
+	expected := "shouldlowercase"
+
+	k := empty.Add("SHouLdLowerCasE")
+
+	if k.String() != expected {
+		t.Errorf("'%v' != '%v'", expected, k)
+		t.FailNow()
+	}
+
+}

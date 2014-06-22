@@ -56,6 +56,10 @@ or
 stopgap -graphite-host 192.168.205.227 http://elasticsearch:9200/_nodes/stats/{jvm,http,os,process}
 ```
 
+Add world cup results to graphite (why not?!)
+```
+stopgap -list-item-key country -prefix worldcup -dry-run http://worldcup.sfg.io/teams/results
+```
 
 Specify a custom prefix for the generated keys
 ```
