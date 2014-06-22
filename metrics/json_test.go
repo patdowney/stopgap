@@ -2,12 +2,12 @@ package metrics
 
 import (
 	"encoding/json"
+	"sort"
 	"testing"
 )
 
-func TestDecodePair(t *testing.T) {
+func TestDecodeNotImplementedPairs(t *testing.T) {
 	k := Key{"key"}
-	// decodePair(key Key, value interface{}) map[string]string
 
 	// decode bool
 	b := decodePair(k, false)
@@ -23,15 +23,27 @@ func TestDecodePair(t *testing.T) {
 		t.FailNow()
 	}
 
-	// decode slice - blows up?
-	//f := []string{"one", "two", "three"}
-	//b = decodePair(k, f) //[]interface{"one", "two", "three"})
-	//if b != nil {
-	//		t.Fail()
-	//	}
+	// decode slice
+	f := []string{"one", "two", "three"}
+	b = decodePair(k, f)
+	if b != nil {
+		t.Errorf("decoded unexpected value: %v", b)
+		t.Fail()
+	}
+
+	// decode nil
+	b = decodePair(k, nil)
+	if b != nil {
+		t.Errorf("decoded unexpected value: %v", b)
+		t.Fail()
+	}
+}
+
+func TestDecodePairs(t *testing.T) {
+	k := Key{"key"}
 
 	// decode json.Number - float
-	b = decodePair(k, json.Number("1.23"))
+	b := decodePair(k, json.Number("1.23"))
 	if b == nil {
 		t.Errorf("failed to decode a json.Number: %v", b)
 		t.FailNow()
@@ -62,20 +74,68 @@ func TestDecodePair(t *testing.T) {
 		t.Errorf("failed to decode a json.Number to int correctly: %v != %v", b[k.String()], 1.234000)
 		t.FailNow()
 	}
-
-	// decode int
-	//b = decodePair(k, 1)
-	// decode map
 }
 
-func TestDecodeDict(t *testing.T) {
-	// decodeDict(prefixKey Key, dict map[string]interface{}) map[string]string {
+func mapKeys(m map[string]string) []string {
+	keys := make([]string, 0)
+	for k, _ := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
-func TestDecode(t *testing.T) {
-	// (d *JSONMetricDecoder) Decode(pairs *[]Metric) error {
+func TestMapKeys(t *testing.T) {
+	expectedKeys := []string{"key1", "key2", "key3"}
+	m := map[string]string{
+		"key1": "", "key2": "", "key3": ""}
+
+	keys := mapKeys(m)
+	if keys[0] != expectedKeys[0] ||
+		keys[1] != expectedKeys[1] ||
+		keys[2] != expectedKeys[2] {
+		t.Errorf("failed to list correct keys: %v != %v", keys, expectedKeys)
+		t.FailNow()
+	}
 }
 
-func TestDecoder(t *testing.T) {
-	// NewDecoder(reader io.Reader) *JSONMetricDecoder {
+func TestDecodeArrayKey(t *testing.T) {
+	k := Key{}
+	expectedKey := "0.number"
+
+	input := []map[string]interface{}{
+		map[string]interface{}{
+			"number": 2.0}}
+
+	b := decodeArray(k, input)
+	if b == nil {
+		t.Errorf("failed to decode array: %v", b)
+		t.Fail()
+	}
+
+	keys := mapKeys(b)
+	if keys[0] != expectedKey {
+		t.Errorf("failed to decode array key properly: %v != %v", keys[0], expectedKey)
+		t.FailNow()
+	}
+}
+
+func TestDecodeDictKeys(t *testing.T) {
+	k := Key{}
+	expectedKey := "number"
+
+	input := map[string]interface{}{
+		"number": 2.0}
+
+	b := decodeDict(k, input)
+	if b == nil {
+		t.Errorf("failed to decode dict: %v", b)
+		t.Fail()
+	}
+
+	keys := mapKeys(b)
+	if keys[0] != expectedKey {
+		t.Errorf("failed to decode array key properly: %v != %v", keys[0], expectedKey)
+		t.FailNow()
+	}
 }

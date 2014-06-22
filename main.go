@@ -1,29 +1,27 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"time"
 
-	"github.com/marpaia/graphite-golang"
 	"github.com/patdowney/stopgap/metrics"
 )
 
-type GraphiteConfig struct {
-	Host string
-	Port int
-}
-
 type Config struct {
-	DryRun      bool
-	Prefix      string
-	DefaultTime time.Time
-	Graphite    GraphiteConfig
+	DryRun     bool
+	Prefix     string
+	MetricTime time.Time
+	Graphite   metrics.GraphiteConfig
 }
 
-func graphiteConfig(cfg *GraphiteConfig) {
+func graphiteConfig(cfg *metrics.GraphiteConfig) {
 	flag.StringVar(&cfg.Host, "graphite-host", "localhost", "graphite host")
 	flag.IntVar(&cfg.Port, "graphite-port", 2003, "graphite port")
 }
@@ -55,27 +53,93 @@ func config() *Config {
 
 	flag.Parse()
 
-	c.DefaultTime = t.Time
+	c.MetricTime = t.Time
 
 	return c
+}
+
+func openHTTPReader(readerUrl string) (io.ReadCloser, error) {
+	res, err := http.Get(readerUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode == http.StatusOK {
+		return res.Body, nil
+	}
+
+	return nil, errors.New(fmt.Sprintf("non-200 response from %v(%v)", readerUrl, res.StatusCode))
+}
+
+func openURLReader(readerUrl string) (io.ReadCloser, error) {
+	u, err := url.Parse(readerUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	switch u.Scheme {
+	case "":
+		return os.Open(u.String())
+	case "http", "https":
+		return openHTTPReader(u.String())
+	default:
+		return nil, errors.New(fmt.Sprintf("unsupported schema: %v", u.Scheme))
+	}
+}
+
+func openReader(readerUri string) (io.ReadCloser, error) {
+	if readerUri == "-" {
+		return os.Stdin, nil
+	}
+	return openURLReader(readerUri)
+}
+
+func openReaders(readerUris []string) ([]io.ReadCloser, error) {
+	readers := make([]io.ReadCloser, 0, 1)
+
+	if len(readerUris) == 0 {
+		readers = append(readers, os.Stdin)
+	} else {
+		for _, a := range readerUris {
+			r, err := openReader(a)
+			if err != nil {
+				return nil, err
+			}
+			readers = append(readers, r)
+		}
+	}
+	return readers, nil
+}
+
+func closeReaders(readers []io.ReadCloser) {
+	for _, r := range readers {
+		r.Close()
+	}
 }
 
 func main() {
 	cfg := config()
 	m := make([]metrics.Metric, 0, 1)
-	metricDecoder := metrics.NewDecoder(os.Stdin)
-	metricDecoder.DefaultTime = cfg.DefaultTime
-	metricDecoder.KeyPrefix = (metrics.Key{}).Add(cfg.Prefix)
-	_ = metricDecoder.Decode(&m)
 
-	gclient := graphite.NewGraphiteNop(cfg.Graphite.Host, cfg.Graphite.Port)
-	if !cfg.DryRun {
-		var err error
-		gclient, err = graphite.NewGraphite(cfg.Graphite.Host, cfg.Graphite.Port)
+	readers, err := openReaders(flag.Args())
+
+	for _, reader := range readers {
+		metricDecoder := metrics.NewDecoder(reader)
+		metricDecoder.MetricTime = cfg.MetricTime
+		metricDecoder.KeyPrefix = (metrics.Key{}).Add(cfg.Prefix)
+		err = metricDecoder.Decode(&m)
 		if err != nil {
-			log.Fatal(err)
+			log.Printf(err.Error())
 		}
 	}
 
-	metrics.PublishMetrics(gclient, m)
+	closeReaders(readers)
+
+	publisher, err := metrics.NewGraphitePublisher(
+		cfg.Graphite, cfg.DryRun)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	publisher.Publish(m)
 }

@@ -47,6 +47,15 @@ Flatten and forward elasticsearch jvm metrics to graphite host
 ```
 curl http://elasticsearch:9200/_nodes/stats/jvm | stopgap -graphite-host 192.168.205.227
 ```
+or
+```
+stopgap -graphite-host 192.168.205.227 http://elasticsearch:9200/_nodes/stats/jvm 
+```
+or
+```
+stopgap -graphite-host 192.168.205.227 http://elasticsearch:9200/_nodes/stats/{jvm,http,os,process}
+```
+
 
 Specify a custom prefix for the generated keys
 ```
