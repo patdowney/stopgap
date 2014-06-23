@@ -51,3 +51,16 @@ func TestAddKeyWithUpperCase(t *testing.T) {
 	}
 
 }
+
+func TestAddKeyWithSpace(t *testing.T) {
+	empty := Key{}
+	expected := "should_not_have_any_spaces"
+
+	k := empty.Add("should not have any spaces")
+
+	if k.String() != expected {
+		t.Errorf("'%v' != '%v'", expected, k)
+		t.FailNow()
+	}
+
+}

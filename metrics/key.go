@@ -10,7 +10,10 @@ type Key struct {
 }
 
 func cleanse(key string) string {
-	return strings.ToLower(strings.Replace(key, ".", "_", -1))
+	noDots := strings.Replace(key, ".", "_", -1)
+	noSpaces := strings.Replace(noDots, " ", "_", -1)
+	noUpper := strings.ToLower(noSpaces)
+	return noUpper
 }
 
 func (k Key) Add(newKeyPart string) Key {
