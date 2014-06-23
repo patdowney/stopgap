@@ -8,10 +8,10 @@ default: all
 all: compile test
 
 compile:
-	go build
+	go build -v
 
 test: 
-	go test ./...
+	go test -v ./...
 
 install:
 	go install
