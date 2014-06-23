@@ -1,4 +1,4 @@
-# Stopgap Metrics Forwarder
+# Stopgap Metrics Forwarder [![Build Status](https://travis-ci.org/patdowney/stopgap.svg?branch=master)](https://travis-ci.org/patdowney/stopgap)
 
 ## What
 Can't be arsed implementing a graphite interface for your favourite 
