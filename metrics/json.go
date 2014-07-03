@@ -8,14 +8,14 @@ import (
 	"time"
 )
 
-func decodeList(key Key, value []map[string]interface{}, keyID string) map[string]string {
+func FlattenList(key Key, value []map[string]interface{}, keyID string) map[string]string {
 	pair := make(map[string]string)
 	for i, v := range value {
 		newKey := key.Add(fmt.Sprintf("%v", i))
 		if keyID != "" {
 			newKey = key.Add(fmt.Sprintf("%v", v[keyID]))
 		}
-		p := decodeDict(newKey, v)
+		p := FlattenMap(newKey, v)
 		for k, nv := range p {
 			pair[k] = nv
 		}
@@ -23,13 +23,13 @@ func decodeList(key Key, value []map[string]interface{}, keyID string) map[strin
 	return pair
 }
 
-func decodePair(key Key, value interface{}) map[string]string {
+func FlattenPair(key Key, value interface{}) map[string]string {
 	var pair map[string]string
 	switch value.(type) {
 	case []map[string]interface{}:
-		pair = decodeList(key, value.([]map[string]interface{}), "")
+		pair = FlattenList(key, value.([]map[string]interface{}), "")
 	case map[string]interface{}:
-		pair = decodeDict(key, value.(map[string]interface{}))
+		pair = FlattenMap(key, value.(map[string]interface{}))
 	case json.Number:
 		pair = make(map[string]string)
 		pair[key.String()] = value.(json.Number).String()
@@ -42,11 +42,11 @@ func decodePair(key Key, value interface{}) map[string]string {
 	return pair
 }
 
-func decodeDict(prefixKey Key, dict map[string]interface{}) map[string]string {
+func FlattenMap(prefixKey Key, m map[string]interface{}) map[string]string {
 	aggregate := make(map[string]string)
-	for key, value := range dict {
+	for key, value := range m {
 		dotKey := prefixKey.Add(key)
-		for k, v := range decodePair(dotKey, value) {
+		for k, v := range FlattenPair(dotKey, value) {
 			aggregate[k] = v
 		}
 	}
@@ -76,14 +76,14 @@ func (d *JSONMetricDecoder) metric(k, v string) Metric {
 		Time:  d.time()}
 }
 
-func (d *JSONMetricDecoder) decodeDict(reader io.Reader, pairs *[]Metric) error {
+func (d *JSONMetricDecoder) FlattenMap(reader io.Reader, pairs *[]Metric) error {
 	jsonDecoder := json.NewDecoder(reader)
 	jsonDecoder.UseNumber()
 	jsonMap := make(map[string]interface{})
 	err := jsonDecoder.Decode(&jsonMap)
 
 	if err == nil {
-		agg := decodeDict(d.KeyPrefix, jsonMap)
+		agg := FlattenMap(d.KeyPrefix, jsonMap)
 		for k, v := range agg {
 			*pairs = append(*pairs, d.metric(k, v))
 		}
@@ -91,14 +91,14 @@ func (d *JSONMetricDecoder) decodeDict(reader io.Reader, pairs *[]Metric) error 
 	return err
 }
 
-func (d *JSONMetricDecoder) decodeDictList(reader io.Reader, pairs *[]Metric) error {
+func (d *JSONMetricDecoder) FlattenMapList(reader io.Reader, pairs *[]Metric) error {
 	jsonDecoder := json.NewDecoder(reader)
 	jsonDecoder.UseNumber()
 	jsonList := make([]map[string]interface{}, 0)
 	err := jsonDecoder.Decode(&jsonList)
 
 	if err == nil {
-		agg := decodeList(d.KeyPrefix, jsonList, d.ListItemKey)
+		agg := FlattenList(d.KeyPrefix, jsonList, d.ListItemKey)
 		for k, v := range agg {
 			*pairs = append(*pairs, d.metric(k, v))
 		}
@@ -109,9 +109,9 @@ func (d *JSONMetricDecoder) decodeDictList(reader io.Reader, pairs *[]Metric) er
 func (d *JSONMetricDecoder) Decode(pairs *[]Metric) error {
 	b := new(bytes.Buffer)
 	r := io.TeeReader(d.reader, b)
-	err := d.decodeDict(r, pairs)
+	err := d.FlattenMap(r, pairs)
 	if err != nil {
-		err = d.decodeDictList(b, pairs)
+		err = d.FlattenMapList(b, pairs)
 	}
 
 	return err

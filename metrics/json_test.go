@@ -6,72 +6,72 @@ import (
 	"testing"
 )
 
-func TestDecodeNotImplementedPairs(t *testing.T) {
+func TestFlattenNotImplementedPairs(t *testing.T) {
 	k := Key{"key"}
 
-	// decode bool
-	b := decodePair(k, false)
+	// flatten bool
+	b := FlattenPair(k, false)
 	if b != nil {
-		t.Errorf("decoded unexpected value: %v", b)
+		t.Errorf("flatten unexpected value: %v", b)
 		t.FailNow()
 	}
 
-	// decode string,
-	b = decodePair(k, "a string")
+	// flatten string,
+	b = FlattenPair(k, "a string")
 	if b != nil {
-		t.Errorf("decoded unexpected value: %v", b)
+		t.Errorf("flatten unexpected value: %v", b)
 		t.FailNow()
 	}
 
-	// decode slice
+	// flatten slice
 	f := []string{"one", "two", "three"}
-	b = decodePair(k, f)
+	b = FlattenPair(k, f)
 	if b != nil {
-		t.Errorf("decoded unexpected value: %v", b)
+		t.Errorf("flatten unexpected value: %v", b)
 		t.Fail()
 	}
 
-	// decode nil
-	b = decodePair(k, nil)
+	// flatten nil
+	b = FlattenPair(k, nil)
 	if b != nil {
-		t.Errorf("decoded unexpected value: %v", b)
+		t.Errorf("flatten unexpected value: %v", b)
 		t.Fail()
 	}
 }
 
-func TestDecodePairs(t *testing.T) {
+func TestFlattenPairs(t *testing.T) {
 	k := Key{"key"}
 
-	// decode json.Number - float
-	b := decodePair(k, json.Number("1.23"))
+	// flatten json.Number - float
+	b := FlattenPair(k, json.Number("1.23"))
 	if b == nil {
-		t.Errorf("failed to decode a json.Number: %v", b)
+		t.Errorf("failed to flatten a json.Number: %v", b)
 		t.FailNow()
 	}
 	if b[k.String()] != "1.23" {
-		t.Errorf("failed to decode a json.Number to float correctly: %v != %v", b, "1.23")
+		t.Errorf("failed to flatten a json.Number to float correctly: %v != %v", b, "1.23")
 		t.FailNow()
 	}
 
-	// decode json.Number - int
-	b = decodePair(k, json.Number("1"))
+	// flatten json.Number - int
+	b = FlattenPair(k, json.Number("1"))
 	if b == nil {
-		t.Errorf("failed to decode a json.Number: %v", b)
+		t.Errorf("failed to flatten a json.Number: %v", b)
 		t.FailNow()
 	}
 	if b[k.String()] != "1" {
-		t.Errorf("failed to decode a json.Number to int correctly: %v != %v", b[k.String()], "1")
+		t.Errorf("failed to flatten a json.Number to int correctly: %v != %v", b[k.String()], "1")
 		t.FailNow()
 	}
 
-	// decode float64
-	b = decodePair(k, float64(1.234))
+	// flatten float64
+	b = FlattenPair(k, float64(1.234))
 	if b == nil {
-		t.Errorf("failed to decode a float64: %v", b)
+		t.Errorf("failed to flatten a float64: %v", b)
 		t.Fail()
 	}
 	if b[k.String()] != "1.234000" {
-		t.Errorf("failed to decode a json.Number to int correctly: %v != %v", b[k.String()], 1.234000)
+		t.Errorf("failed to flatten a json.Number to int correctly: %v != %v", b[k.String()], 1.234000)
 		t.FailNow()
 	}
 }
@@ -99,7 +99,7 @@ func TestMapKeys(t *testing.T) {
 	}
 }
 
-func TestDecodeListKey(t *testing.T) {
+func TestFlattenListKey(t *testing.T) {
 	k := Key{}
 	expectedKey := "0.number"
 
@@ -107,20 +107,20 @@ func TestDecodeListKey(t *testing.T) {
 		map[string]interface{}{
 			"number": 2.0}}
 
-	b := decodeList(k, input, "")
+	b := FlattenList(k, input, "")
 	if b == nil {
-		t.Errorf("failed to decode array: %v", b)
+		t.Errorf("failed to flatten array: %v", b)
 		t.Fail()
 	}
 
 	keys := mapKeys(b)
 	if keys[0] != expectedKey {
-		t.Errorf("failed to decode array key properly: %v != %v", keys[0], expectedKey)
+		t.Errorf("failed to flatten array key properly: %v != %v", keys[0], expectedKey)
 		t.FailNow()
 	}
 }
 
-func TestDecodeListCustomKey(t *testing.T) {
+func TestFlattenListCustomKey(t *testing.T) {
 	k := Key{}
 	expectedKey := "test.number"
 
@@ -129,35 +129,35 @@ func TestDecodeListCustomKey(t *testing.T) {
 			"name":   "test",
 			"number": 2.0}}
 
-	b := decodeList(k, input, "name")
+	b := FlattenList(k, input, "name")
 	if b == nil {
-		t.Errorf("failed to decode array: %v", b)
+		t.Errorf("failed to flatten array: %v", b)
 		t.Fail()
 	}
 
 	keys := mapKeys(b)
 	if keys[0] != expectedKey {
-		t.Errorf("failed to decode array key properly: %v != %v", keys[0], expectedKey)
+		t.Errorf("failed to flatten array key properly: %v != %v", keys[0], expectedKey)
 		t.FailNow()
 	}
 }
 
-func TestDecodeDictKeys(t *testing.T) {
-	k := Key{}
+func TestMapKeys(t *testing.T) {
+	//k := Key{}
 	expectedKey := "number"
 
-	input := map[string]interface{}{
-		"number": 2.0}
+	//input := map[string]interface{}{
+	//	"number": 2.0}
 
-	b := decodeDict(k, input)
-	if b == nil {
-		t.Errorf("failed to decode dict: %v", b)
-		t.Fail()
-	}
+	//b := FlattentMap(k, input)
+	//if b == nil {
+	//	t.Errorf("failed to flatten map: %v", b)
+	//	t.Fail()
+	//}
 
 	keys := mapKeys(b)
 	if keys[0] != expectedKey {
-		t.Errorf("failed to decode array key properly: %v != %v", keys[0], expectedKey)
+		t.Errorf("failed to fetch map keys: %v != %v", keys[0], expectedKey)
 		t.FailNow()
 	}
 }
