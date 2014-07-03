@@ -141,23 +141,3 @@ func TestFlattenListCustomKey(t *testing.T) {
 		t.FailNow()
 	}
 }
-
-func TestMapKeys(t *testing.T) {
-	//k := Key{}
-	expectedKey := "number"
-
-	//input := map[string]interface{}{
-	//	"number": 2.0}
-
-	//b := FlattentMap(k, input)
-	//if b == nil {
-	//	t.Errorf("failed to flatten map: %v", b)
-	//	t.Fail()
-	//}
-
-	keys := mapKeys(b)
-	if keys[0] != expectedKey {
-		t.Errorf("failed to fetch map keys: %v != %v", keys[0], expectedKey)
-		t.FailNow()
-	}
-}
