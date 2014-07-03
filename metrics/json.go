@@ -3,6 +3,7 @@ package metrics
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"time"
 )
@@ -30,14 +31,30 @@ func (d *JSONMetricDecoder) metric(k, v string) Metric {
 		Time:  d.time()}
 }
 
+func FilterMapNumbers(m map[string]interface{}) map[string]string {
+	filteredMap := make(map[string]string)
+
+	for k, v := range m {
+		switch v.(type) {
+		case int64, float64:
+			filteredMap[k] = fmt.Sprintf("%v", v)
+		}
+	}
+	return filteredMap
+}
+
 func (d *JSONMetricDecoder) FlattenMap(reader io.Reader, pairs *[]Metric) error {
+	jsonMap := make(map[string]interface{})
+	return d.flattenAndFilter(reader, pairs, jsonMap)
+}
+
+func (d *JSONMetricDecoder) flattenAndFilter(reader io.Reader, pairs *[]Metric, data interface{}) error {
 	jsonDecoder := json.NewDecoder(reader)
 	jsonDecoder.UseNumber()
-	jsonMap := make(map[string]interface{})
-	err := jsonDecoder.Decode(&jsonMap)
 
+	err := jsonDecoder.Decode(data)
 	if err == nil {
-		agg := FlattenMap(d.KeyPrefix, jsonMap)
+		agg := FilterMapNumbers(Flatten(d.KeyPrefix, data, d.ListItemKey))
 		for k, v := range agg {
 			*pairs = append(*pairs, d.metric(k, v))
 		}
@@ -46,18 +63,8 @@ func (d *JSONMetricDecoder) FlattenMap(reader io.Reader, pairs *[]Metric) error 
 }
 
 func (d *JSONMetricDecoder) FlattenMapList(reader io.Reader, pairs *[]Metric) error {
-	jsonDecoder := json.NewDecoder(reader)
-	jsonDecoder.UseNumber()
 	jsonList := make([]map[string]interface{}, 0)
-	err := jsonDecoder.Decode(&jsonList)
-
-	if err == nil {
-		agg := FlattenList(d.KeyPrefix, jsonList, d.ListItemKey)
-		for k, v := range agg {
-			*pairs = append(*pairs, d.metric(k, v))
-		}
-	}
-	return err
+	return d.flattenAndFilter(reader, pairs, jsonList)
 }
 
 func (d *JSONMetricDecoder) Decode(pairs *[]Metric) error {
@@ -72,7 +79,7 @@ func (d *JSONMetricDecoder) Decode(pairs *[]Metric) error {
 }
 
 func NewDecoder(reader io.Reader) *JSONMetricDecoder {
-	metricDecoder := &JSONMetricDecoder{reader: reader} //jsonDecoder: jsonDecoder}
+	metricDecoder := &JSONMetricDecoder{reader: reader}
 
 	return metricDecoder
 }

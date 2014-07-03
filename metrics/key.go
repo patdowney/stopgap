@@ -5,7 +5,12 @@ import (
 	"strings"
 )
 
-type Key struct {
+type Key interface {
+	Add(interface{}) Key
+	String() string
+}
+
+type GraphiteKey struct {
 	Key string
 }
 
@@ -16,15 +21,17 @@ func cleanse(key string) string {
 	return noUpper
 }
 
-func (k Key) Add(newKeyPart string) Key {
-	newKey := cleanse(newKeyPart)
+//func (k Key) Add(newKeyPart string) Key {
+func (k GraphiteKey) Add(newKeyPart interface{}) Key {
+	partAsString := fmt.Sprintf("%v", newKeyPart)
+	newKey := cleanse(partAsString)
 	if k.Key != "" {
 		newKey = fmt.Sprintf("%v.%v", k.Key, newKey)
 	}
 
-	return Key{Key: newKey}
+	return GraphiteKey{Key: newKey}
 }
 
-func (k Key) String() string {
+func (k GraphiteKey) String() string {
 	return k.Key
 }

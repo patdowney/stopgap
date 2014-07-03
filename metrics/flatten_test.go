@@ -7,73 +7,47 @@ import (
 )
 
 func TestFlattenNotImplementedPairs(t *testing.T) {
-	k := Key{"key"}
-
-	// flatten bool
-	b := FlattenPair(k, false)
-	if b != nil {
-		t.Errorf("flatten unexpected value: %v", b)
-		t.FailNow()
-	}
-
-	// flatten string,
-	b = FlattenPair(k, "a string")
-	if b != nil {
-		t.Errorf("flatten unexpected value: %v", b)
-		t.FailNow()
-	}
+	k := GraphiteKey{"key"}
 
 	// flatten slice
 	f := []string{"one", "two", "three"}
-	b = FlattenPair(k, f)
+	b := FlattenPair(k, f, "")
 	if b != nil {
 		t.Errorf("flatten unexpected value: %v", b)
 		t.Fail()
 	}
 
 	// flatten nil
-	b = FlattenPair(k, nil)
+	b = FlattenPair(k, nil, "")
 	if b != nil {
 		t.Errorf("flatten unexpected value: %v", b)
 		t.Fail()
 	}
 }
 
+func testFlattenPair(t *testing.T, value interface{}, expected interface{}, label string) {
+	k := GraphiteKey{"key"}
+	b := FlattenPair(k, value, "")
+	if b == nil {
+		t.Errorf("(%v) failed to flatten pair: %v", label, b)
+		t.FailNow()
+	}
+	if b[k.String()] != expected {
+		t.Errorf("(%v) failed to flatten correctly: %v != %v", label, b[k.String()], value)
+		t.FailNow()
+	}
+}
+
 func TestFlattenPairs(t *testing.T) {
-	k := Key{"key"}
+	testFlattenPair(t, false, false, "bool")
 
-	// flatten json.Number - float
-	b := FlattenPair(k, json.Number("1.23"))
-	if b == nil {
-		t.Errorf("failed to flatten a json.Number: %v", b)
-		t.FailNow()
-	}
-	if b[k.String()] != "1.23" {
-		t.Errorf("failed to flatten a json.Number to float correctly: %v != %v", b, "1.23")
-		t.FailNow()
-	}
+	testFlattenPair(t, "a string", "a string", "string")
 
-	// flatten json.Number - int
-	b = FlattenPair(k, json.Number("1"))
-	if b == nil {
-		t.Errorf("failed to flatten a json.Number: %v", b)
-		t.FailNow()
-	}
-	if b[k.String()] != "1" {
-		t.Errorf("failed to flatten a json.Number to int correctly: %v != %v", b[k.String()], "1")
-		t.FailNow()
-	}
+	testFlattenPair(t, json.Number("1.23"), 1.23, "json.Number(float)")
 
-	// flatten float64
-	b = FlattenPair(k, float64(1.234))
-	if b == nil {
-		t.Errorf("failed to flatten a float64: %v", b)
-		t.Fail()
-	}
-	if b[k.String()] != "1.234000" {
-		t.Errorf("failed to flatten a json.Number to int correctly: %v != %v", b[k.String()], 1.234000)
-		t.FailNow()
-	}
+	testFlattenPair(t, json.Number("1"), int64(1), "json.Number(int)")
+
+	testFlattenPair(t, float64(1.234), 1.234, "float64")
 }
 
 func mapKeys(m map[string]string) []string {
@@ -100,14 +74,14 @@ func TestMapKeys(t *testing.T) {
 }
 
 func TestFlattenListKey(t *testing.T) {
-	k := Key{}
+	k := GraphiteKey{}
 	expectedKey := "0.number"
 
 	input := []map[string]interface{}{
 		map[string]interface{}{
 			"number": 2.0}}
 
-	b := FlattenList(k, input, "")
+	b := FilterMapNumbers(FlattenMapList(k, input, ""))
 	if b == nil {
 		t.Errorf("failed to flatten array: %v", b)
 		t.Fail()
@@ -121,7 +95,7 @@ func TestFlattenListKey(t *testing.T) {
 }
 
 func TestFlattenListCustomKey(t *testing.T) {
-	k := Key{}
+	k := GraphiteKey{}
 	expectedKey := "test.number"
 
 	input := []map[string]interface{}{
@@ -129,7 +103,7 @@ func TestFlattenListCustomKey(t *testing.T) {
 			"name":   "test",
 			"number": 2.0}}
 
-	b := FlattenList(k, input, "name")
+	b := FilterMapNumbers(FlattenMapList(k, input, "name"))
 	if b == nil {
 		t.Errorf("failed to flatten array: %v", b)
 		t.Fail()

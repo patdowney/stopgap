@@ -124,19 +124,18 @@ func main() {
 	m := make([]metrics.Metric, 0, 1)
 
 	readers, err := openReaders(flag.Args())
+	defer closeReaders(readers)
 
 	for _, reader := range readers {
 		metricDecoder := metrics.NewDecoder(reader)
 		metricDecoder.MetricTime = cfg.MetricTime
 		metricDecoder.ListItemKey = cfg.ListItemKey
-		metricDecoder.KeyPrefix = (metrics.Key{}).Add(cfg.Prefix)
+		metricDecoder.KeyPrefix = metrics.GraphiteKey{cfg.Prefix}
 		err = metricDecoder.Decode(&m)
 		if err != nil {
 			log.Printf(err.Error())
 		}
 	}
-
-	closeReaders(readers)
 
 	publisher, err := metrics.NewGraphitePublisher(
 		cfg.Graphite, cfg.DryRun)
