@@ -51,8 +51,8 @@ func TestFlattenPairs(t *testing.T) {
 }
 
 func mapKeys(m map[string]string) []string {
-	keys := make([]string, 0)
-	for k, _ := range m {
+	var keys []string
+	for k := range m {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)

@@ -2,10 +2,12 @@ package metrics
 
 import "encoding/json"
 
+// Flatten ...
 func Flatten(key Key, value interface{}, keyID string) map[string]interface{} {
 	return FlattenPair(key, value, keyID)
 }
 
+// FlattenMapList ...
 func FlattenMapList(key Key, mapList []map[string]interface{}, keyID string) map[string]interface{} {
 	pair := make(map[string]interface{})
 	for i, v := range mapList {
@@ -35,6 +37,7 @@ func flattenJSONNumber(key Key, value json.Number) map[string]interface{} {
 	return pair
 }
 
+// FlattenPair ...
 func FlattenPair(key Key, value interface{}, keyID string) map[string]interface{} {
 	var pair map[string]interface{}
 	switch value.(type) {
@@ -58,6 +61,7 @@ func FlattenPair(key Key, value interface{}, keyID string) map[string]interface{
 	return pair
 }
 
+// FlattenMap ...
 func FlattenMap(prefixKey Key, m map[string]interface{}, keyID string) map[string]interface{} {
 	aggregate := make(map[string]interface{})
 	for key, value := range m {

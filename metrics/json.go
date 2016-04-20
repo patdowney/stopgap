@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// JSONMetricDecoder ...
 type JSONMetricDecoder struct {
 	KeyPrefix   Key
 	ListItemKey string
@@ -31,7 +32,7 @@ func (d *JSONMetricDecoder) metric(k, v string) Metric {
 		Time:  d.time()}
 }
 
-func FilterMapNumbers(m map[string]interface{}) map[string]string {
+func filterMapNumbers(m map[string]interface{}) map[string]string {
 	filteredMap := make(map[string]string)
 
 	for k, v := range m {
@@ -43,7 +44,8 @@ func FilterMapNumbers(m map[string]interface{}) map[string]string {
 	return filteredMap
 }
 
-func (d *JSONMetricDecoder) FlattenMap(reader io.Reader, pairs *[]Metric) error {
+// FlattenMap ...
+func (d *JSONMetricDecoder) flattenMap(reader io.Reader, pairs *[]Metric) error {
 	jsonMap := make(map[string]interface{})
 	return d.flattenAndFilter(reader, pairs, jsonMap)
 }
@@ -52,9 +54,9 @@ func (d *JSONMetricDecoder) flattenAndFilter(reader io.Reader, pairs *[]Metric, 
 	jsonDecoder := json.NewDecoder(reader)
 	jsonDecoder.UseNumber()
 
-	err := jsonDecoder.Decode(data)
+	err := jsonDecoder.Decode(&data)
 	if err == nil {
-		agg := FilterMapNumbers(Flatten(d.KeyPrefix, data, d.ListItemKey))
+		agg := filterMapNumbers(Flatten(d.KeyPrefix, data, d.ListItemKey))
 		for k, v := range agg {
 			*pairs = append(*pairs, d.metric(k, v))
 		}
@@ -62,22 +64,26 @@ func (d *JSONMetricDecoder) flattenAndFilter(reader io.Reader, pairs *[]Metric, 
 	return err
 }
 
-func (d *JSONMetricDecoder) FlattenMapList(reader io.Reader, pairs *[]Metric) error {
-	jsonList := make([]map[string]interface{}, 0)
+// FlattenMapList ...
+func (d *JSONMetricDecoder) flattenMapList(reader io.Reader, pairs *[]Metric) error {
+	var jsonList []map[string]interface{}
 	return d.flattenAndFilter(reader, pairs, jsonList)
 }
 
+// Decode ...
 func (d *JSONMetricDecoder) Decode(pairs *[]Metric) error {
 	b := new(bytes.Buffer)
 	r := io.TeeReader(d.reader, b)
-	err := d.FlattenMap(r, pairs)
+	err := d.flattenMap(r, pairs)
 	if err != nil {
-		err = d.FlattenMapList(b, pairs)
+		err = d.flattenMapList(b, pairs)
+		fmt.Printf("FlattenMapList: %s\n", err)
 	}
 
 	return err
 }
 
+// NewDecoder ...
 func NewDecoder(reader io.Reader) *JSONMetricDecoder {
 	metricDecoder := &JSONMetricDecoder{reader: reader}
 

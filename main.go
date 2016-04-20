@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -14,7 +13,7 @@ import (
 	"github.com/patdowney/stopgap/metrics"
 )
 
-type Config struct {
+type config struct {
 	DryRun      bool
 	Prefix      string
 	ListItemKey string
@@ -40,8 +39,8 @@ func (t *timeArg) String() string {
 	return fmt.Sprint(t.Time.Unix()) //Format(time.RFC3339)
 }
 
-func config() *Config {
-	c := &Config{}
+func fetchConfig() *config {
+	c := &config{}
 
 	flag.BoolVar(&c.DryRun, "dry-run", false, "dry run")
 	flag.StringVar(&c.Prefix, "prefix", "", "metric prefix")
@@ -60,8 +59,8 @@ func config() *Config {
 	return c
 }
 
-func openHTTPReader(readerUrl string) (io.ReadCloser, error) {
-	res, err := http.Get(readerUrl)
+func openHTTPReader(readerURL string) (io.ReadCloser, error) {
+	res, err := http.Get(readerURL)
 	if err != nil {
 		return nil, err
 	}
@@ -70,11 +69,11 @@ func openHTTPReader(readerUrl string) (io.ReadCloser, error) {
 		return res.Body, nil
 	}
 
-	return nil, errors.New(fmt.Sprintf("non-200 response from %v(%v)", readerUrl, res.StatusCode))
+	return nil, fmt.Errorf("non-200 response from %v(%v)", readerURL, res.StatusCode)
 }
 
-func openURLReader(readerUrl string) (io.ReadCloser, error) {
-	u, err := url.Parse(readerUrl)
+func openURLReader(readerURL string) (io.ReadCloser, error) {
+	u, err := url.Parse(readerURL)
 	if err != nil {
 		return nil, err
 	}
@@ -85,24 +84,24 @@ func openURLReader(readerUrl string) (io.ReadCloser, error) {
 	case "http", "https":
 		return openHTTPReader(u.String())
 	default:
-		return nil, errors.New(fmt.Sprintf("unsupported schema: %v", u.Scheme))
+		return nil, fmt.Errorf("unsupported schema: %v", u.Scheme)
 	}
 }
 
-func openReader(readerUri string) (io.ReadCloser, error) {
-	if readerUri == "-" {
+func openReader(readerURI string) (io.ReadCloser, error) {
+	if readerURI == "-" {
 		return os.Stdin, nil
 	}
-	return openURLReader(readerUri)
+	return openURLReader(readerURI)
 }
 
-func openReaders(readerUris []string) ([]io.ReadCloser, error) {
+func openReaders(readerURIs []string) ([]io.ReadCloser, error) {
 	readers := make([]io.ReadCloser, 0, 1)
 
-	if len(readerUris) == 0 {
+	if len(readerURIs) == 0 {
 		readers = append(readers, os.Stdin)
 	} else {
-		for _, a := range readerUris {
+		for _, a := range readerURIs {
 			r, err := openReader(a)
 			if err != nil {
 				return nil, err
@@ -120,7 +119,7 @@ func closeReaders(readers []io.ReadCloser) {
 }
 
 func main() {
-	cfg := config()
+	cfg := fetchConfig()
 	m := make([]metrics.Metric, 0, 1)
 
 	readers, err := openReaders(flag.Args())
@@ -133,7 +132,7 @@ func main() {
 		metricDecoder.KeyPrefix = metrics.GraphiteKey{cfg.Prefix}
 		err = metricDecoder.Decode(&m)
 		if err != nil {
-			log.Printf(err.Error())
+			log.Print(err.Error())
 		}
 	}
 
