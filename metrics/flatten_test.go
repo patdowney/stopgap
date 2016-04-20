@@ -78,10 +78,10 @@ func TestFlattenListKey(t *testing.T) {
 	expectedKey := "0.number"
 
 	input := []map[string]interface{}{
-		map[string]interface{}{
+		{
 			"number": 2.0}}
 
-	b := FilterMapNumbers(FlattenMapList(k, input, ""))
+	b := filterMapNumbers(FlattenMapList(k, input, ""))
 	if b == nil {
 		t.Errorf("failed to flatten array: %v", b)
 		t.Fail()
@@ -99,11 +99,11 @@ func TestFlattenListCustomKey(t *testing.T) {
 	expectedKey := "test.number"
 
 	input := []map[string]interface{}{
-		map[string]interface{}{
+		{
 			"name":   "test",
 			"number": 2.0}}
 
-	b := FilterMapNumbers(FlattenMapList(k, input, "name"))
+	b := filterMapNumbers(FlattenMapList(k, input, "name"))
 	if b == nil {
 		t.Errorf("failed to flatten array: %v", b)
 		t.Fail()
