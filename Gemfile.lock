@@ -22,7 +22,7 @@ GEM
       pleaserun (~> 0.0.29)
       ruby-xz (~> 0.2.3)
       stud
-    git (1.8.1)
+    git (1.11.0)
       rchardet (~> 1.8)
     insist (1.0.0)
     io-like (0.3.1)
